@@ -99,6 +99,15 @@ coverage.xml
 .pytest_cache/
 cover/
 
+# MAC
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
 # Translations
 *.mo
 *.pot
@@ -205,7 +214,7 @@ cython_debug/
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
+.idea/
 
 ### Python Patch ###
 # Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
@@ -225,8 +234,6 @@ pyrightconfig.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 
-# JetBrains IDEs (e.g. PyCharm, IntelliJ IDEA) project files
-.idea/
 
 # Local History for Visual Studio Code
 .history/

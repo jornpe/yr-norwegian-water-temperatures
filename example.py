@@ -1,6 +1,6 @@
 from yrwatertemp import WaterTemperatures
 
-api_key = "1cda72ab-3e66-4689-afaa-0bbb5055d46e"
+api_key = "your_api_key_here"  # Replace with your actual API key
 client = WaterTemperatures(api_key)
 
 water_temperatures = client.get_all_water_temperatures()
