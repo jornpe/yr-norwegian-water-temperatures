@@ -54,4 +54,4 @@ The `get_temperatures` method returns a list of `LocationData` objects. Each obj
 
 `time` (datetime): The timestamp of the reading.
 
-`source` (str): The source of the data.
+`source` (str): The source of the data (not always present).
