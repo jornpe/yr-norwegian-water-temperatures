@@ -33,6 +33,7 @@ hass-test/
 *.db-journal
 *.pid
 tts
+example.py
 
 # automatically downloaded dependencies
 deps
@@ -223,6 +224,9 @@ pyrightconfig.json
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
+
+# JetBrains IDEs (e.g. PyCharm, IntelliJ IDEA) project files
+.idea/
 
 # Local History for Visual Studio Code
 .history/
