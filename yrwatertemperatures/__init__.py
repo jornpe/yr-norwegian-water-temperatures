@@ -7,7 +7,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
-class WaterTemperature:
+class WaterTemperatureData:
     """Represents the water temperature data for a single location."""
     name: str
     location_id: str
@@ -37,7 +37,7 @@ class WaterTemperatures:
             "apikey": api_key
         }
 
-    def get_all_water_temperatures(self) -> list[WaterTemperature]:
+    def get_all_water_temperatures(self) -> list[WaterTemperatureData]:
         """Fetch all water temperatures from the Yr API."""
 
         url = self.base_url + "/watertemperatures"
@@ -53,16 +53,16 @@ class WaterTemperatures:
             raise RuntimeError(f"Failed to fetch data from Yr API: {e}")
 
     @staticmethod
-    def _parse_water_temperatures(data: list[dict]) -> list[WaterTemperature]:
+    def _parse_water_temperatures(data: list) -> list[WaterTemperatureData]:
         """Parse the JSON data from the Yr API into a list of WaterTemperature objects."""
 
         if not isinstance(data, list):
-            raise ValueError("API response is not a list of locations.")
+            raise ValueError("API response is not a list.")
 
         temperatures = []
         for item in data:
             try:
-                temp = WaterTemperature(
+                temp = WaterTemperatureData(
                     name=item["locationName"],
                     location_id=item["locationId"],
                     latitude=item["position"]["lat"],

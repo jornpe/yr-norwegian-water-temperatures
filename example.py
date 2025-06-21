@@ -1,11 +1,19 @@
-from yrwatertemp import WaterTemperatures
+from yrwatertemperatures import WaterTemperatures
 
-api_key = "your_api_key_here"  # Replace with your actual API key
+# Replace 'YOUR_API_KEY' with your actual API key
+api_key = 'YOUR_API_KEY'
 client = WaterTemperatures(api_key)
 
-water_temperatures = client.get_all_water_temperatures()
-for temp in water_temperatures:
-    print(f"{temp.name} ({temp.location_id}): {temp.temperature}°C at {temp.time}")
+try:
+    # Fetch the water temperature data
+    temperatures = client.get_all_water_temperatures()
+
+    # Print the location and temperature
+    for temp in temperatures:
+        print(f"Location: {temp.name}, Temperature: {temp.temperature}°C")
+
+except Exception as e:
+    print(f"An error occurred: {e}")
 
 
 

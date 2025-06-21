@@ -1,16 +1,16 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='norway-water-temps',
-    version='0.1.0',
+    name='yrwatertemperatures',
+    version='0.1.1',
     author='Jørn Pettersen',
     author_email='joern.pettersen@gmail.com',
     description='A Python client to fetch water temperatures in Norway from YR.no.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/jornpe/yr-norwegian-water-temperatures', # Replace with your repo URL
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
+    packages=find_packages(where="yrwatertemperatures"),
+    package_dir={"": "yrwatertemperatures"},
     install_requires=[
         'requests>=2.20.0',
     ],
