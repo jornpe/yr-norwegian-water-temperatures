@@ -8,7 +8,7 @@ setup(
     description='A Python client to fetch water temperatures in Norway from YR.no.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    url='https://github.com/jornpe/norway-water-temps', # Replace with your repo URL
+    url='https://github.com/jornpe/yr-norwegian-water-temperatures', # Replace with your repo URL
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[
@@ -27,6 +27,6 @@ setup(
     ],
     python_requires='>=3.8',
     project_urls={
-        'Bug Tracker': 'https://github.com/yourusername/norway-water-temps/issues',
+        'Bug Tracker': 'https://github.com/jornpe/yr-norwegian-water-temperatures/issues',
     },
 )

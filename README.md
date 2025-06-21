@@ -6,6 +6,9 @@ A Python package to fetch water temperature data from various locations in Norwa
 pip install yr-norway-water-temps
 ```
 
+## API key
+To use this package, you need an API key from yr.no, see https://hjelp.yr.no/hc/no/articles/5949243432850-API-for-badetemperaturer for more info. 
+
 ## Usage
 First, you'll need to get an API key from the provider of the water temperature data.
 
