@@ -1,19 +1,25 @@
+"""Example script to fetch and display water temperatures using the yrwatertemperatures package."""
+import asyncio
+from aiohttp import ClientSession, ClientError
 from yrwatertemperatures import WaterTemperatures
 
-# Replace 'YOUR_API_KEY' with your actual API key
-api_key = 'YOUR_API_KEY'
-client = WaterTemperatures(api_key)
+API_KEY = "your_api_key_here"  # Replace with your actual API key
 
-try:
-    # Fetch the water temperature data
-    temperatures = client.get_all_water_temperatures()
+async def main() -> None:
+    """Main function to fetch and display water temperatures."""
+    async with ClientSession() as session:
+        try:
+            client = WaterTemperatures(API_KEY, session)
+            temperatures = await client.async_get_all_water_temperatures()
 
-    # Print the location and temperature
-    for temp in temperatures:
-        print(f"Location: {temp.name}, Temperature: {temp.temperature}°C")
+            # Print the location and temperature
+            for temp in temperatures:
+                print(f"Location: {temp.name}, Temperature: {temp.temperature}°C")
 
-except Exception as e:
-    print(f"An error occurred: {e}")
+        except (ClientError, Exception) as e:
+            print(f"An error occurred: {e}")
 
-
+loop = asyncio.new_event_loop()
+loop.run_until_complete(main())
+loop.close()
 

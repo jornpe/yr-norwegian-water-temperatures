@@ -1,4 +1,5 @@
-import requests
+from http import HTTPStatus
+from aiohttp import ClientSession, ClientError
 from datetime import datetime
 from dataclasses import dataclass
 import logging
@@ -24,7 +25,11 @@ class WaterTemperatureData:
 class WaterTemperatures:
     """Class to fetch and parse water temperature data from Yr API."""
 
-    def __init__(self, api_key: str):
+    def __init__(
+            self,
+            api_key: str,
+            session: ClientSession
+    ) -> None:
         """
         Initialize the WaterTemperatures class with the API key.
 
@@ -32,28 +37,30 @@ class WaterTemperatures:
         """
         if not api_key:
             raise ValueError("API key must be provided.")
-        self.base_url = "https://badetemperaturer.yr.no/api"
-        self.headers = {
+        self.base_url: str = "https://badetemperaturer.yr.no/api"
+        self.headers: dict = {
             "apikey": api_key
         }
+        self.session: ClientSession = session
 
-    def get_all_water_temperatures(self) -> list[WaterTemperatureData]:
+    async def async_get_all_water_temperatures(self) -> list[WaterTemperatureData]:
         """Fetch all water temperatures from the Yr API."""
 
         url = self.base_url + "/watertemperatures"
         try:
-            response = requests.get(url, headers=self.headers)
-            if response.status_code == 401:
-                raise PermissionError("Unauthorized: Invalid API key or insufficient permissions.")
-            response.raise_for_status()
-            data = response.json()
-            return self._parse_water_temperatures(data)
+            async with self.session.get(url, headers=self.headers) as response:
+                if response.status == HTTPStatus.UNAUTHORIZED.value:
+                    raise PermissionError("Unauthorized: Invalid API key or insufficient permissions.")
 
-        except requests.RequestException as e:
+                response.raise_for_status()
+                data = await response.json()
+                return self.parse_water_temperatures(data)
+
+        except ClientError as e:
             raise RuntimeError(f"Failed to fetch data from Yr API: {e}")
 
     @staticmethod
-    def _parse_water_temperatures(data: list) -> list[WaterTemperatureData]:
+    def parse_water_temperatures(data: list) -> list[WaterTemperatureData]:
         """Parse the JSON data from the Yr API into a list of WaterTemperature objects."""
 
         if not isinstance(data, list):

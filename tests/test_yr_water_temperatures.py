@@ -1,104 +1,134 @@
 import unittest
-from unittest.mock import patch, Mock
-from datetime import datetime
-
+import aiohttp
+from aioresponses import aioresponses
+import pytest
 from yrwatertemperatures import WaterTemperatures, WaterTemperatureData
 
-class TestWaterTemperatures(unittest.TestCase):
+class TestWaterTemperatures(unittest.IsolatedAsyncioTestCase):
 
-    def setUp(self):
-        """Set up the test case with a mock API key and the WaterTemperatures instance."""
-        self.api_key = "test_api_key"
-        self.client = WaterTemperatures(self.api_key)
-
-    def test_init_requires_api_key(self):
+    @pytest.mark.asyncio
+    async def test_init_requires_api_key(self):
         """Test that the constructor raises ValueError if no API key is provided."""
-        with self.assertRaises(ValueError):
-            WaterTemperatures(api_key="")
+        session = aiohttp.ClientSession()
 
-    @patch('yrwatertemperatures.requests.get')
-    def test_get_all_water_temperatures_success(self, mock_get):
+        with aioresponses() as session_mock:
+            session_mock.get(
+                'https://badetemperaturer.yr.no/api/watertemperatures',
+                status=200,
+                payload=[]
+            )
+            with pytest.raises(ValueError, match="API key must be provided."):
+                WaterTemperatures("", session)
+        await session.close()
+
+    @pytest.mark.asyncio
+    async def test_get_all_water_temperatures_success(self):
         """Test fetching water temperatures successfully."""
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = [
-            {
-                "locationName": "Storøyodden",
-                "locationId": "0-10014",
-                "position": {
-                    "lat": 59.88819,
-                    "lon": 10.59302
-                },
-                "elevation": 1,
-                "county": "Akershus",
-                "municipality": "Bærum kommune",
-                "temperature": 13.6,
-                "time": "2025-05-30T04:00:46+02:00",
-                "sourceDisplayName": "Badevann.no"
-            },
-            {
-                "locationName": "Årvolldammen",
-                "locationId": "0-10027",
-                "position": {
-                    "lat": 59.94768,
-                    "lon": 10.82012
-                },
-                "elevation": 181,
-                "county": "Oslo fylke",
-                "municipality": "Oslo kommune",
-                "temperature": 10,
-                "time": "2025-05-26T08:40:00+02:00"
-            },
+        session = aiohttp.ClientSession()
 
-        ]
-        mock_get.return_value = mock_response
+        with aioresponses() as session_mock:
+            session_mock.get(
+                'https://badetemperaturer.yr.no/api/watertemperatures',
+                payload=[
+                    {
+                        "locationName": "Storøyodden",
+                        "locationId": "0-10014",
+                        "position": {
+                            "lat": 59.88819,
+                            "lon": 10.59302
+                        },
+                        "elevation": 1,
+                        "county": "Akershus",
+                        "municipality": "Bærum kommune",
+                        "temperature": 13.6,
+                        "time": "2025-05-30T04:00:46+02:00",
+                        "sourceDisplayName": "Badevann.no"
+                    },
+                    {
+                        "locationName": "Årvolldammen",
+                        "locationId": "0-10027",
+                        "position": {
+                            "lat": 59.94768,
+                            "lon": 10.82012
+                        },
+                        "elevation": 181,
+                        "county": "Oslo fylke",
+                        "municipality": "Oslo kommune",
+                        "temperature": 10,
+                        "time": "2025-05-26T08:40:00+02:00"
+                    }
+                ]
+            )
 
-        temperatures = self.client.get_all_water_temperatures()
-        self.assertEqual(len(temperatures), 2)
-        self.assertIsInstance(temperatures[0], WaterTemperatureData)
-        self.assertEqual(temperatures[0].name, "Storøyodden")
-        self.assertEqual(temperatures[1].source, "")
+            client = WaterTemperatures("test_api_key", session)
+            temperatures = await client.async_get_all_water_temperatures()
+        await session.close()
 
-    @patch('yrwatertemperatures.requests.get')
-    def test_get_all_water_temperatures_unauthorized(self, mock_get):
+        assert len(temperatures) == 2
+        assert isinstance(temperatures[0], WaterTemperatureData)
+        assert temperatures[0].name == "Storøyodden"
+        assert temperatures[0].temperature == 13.6
+        assert temperatures[1].source == ""
+
+
+    @pytest.mark.asyncio
+    async def test_get_all_water_temperatures_unauthorized(self):
         """Test handling unauthorized access."""
-        mock_response = Mock()
-        mock_response.status_code = 401
-        mock_get.return_value = mock_response
 
-        with self.assertRaises(PermissionError):
-            self.client.get_all_water_temperatures()
+        session = aiohttp.ClientSession()
+        with aioresponses() as session_mock:
+            session_mock.get(
+                'https://badetemperaturer.yr.no/api/watertemperatures',
+                status=401,
+            )
 
-    @patch('yrwatertemperatures.requests.get')
-    def test_get_all_water_temperatures_invalid_response(self, mock_get):
+            with pytest.raises(PermissionError):
+                client = WaterTemperatures("test_api_key", session)
+                await client.async_get_all_water_temperatures()
+        await session.close()
+
+
+    @pytest.mark.asyncio
+    async def test_get_all_water_temperatures_invalid_response(self):
         """Test handling invalid response format."""
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = "Invalid data format"
-        mock_get.return_value = mock_response
+        session = aiohttp.ClientSession()
 
-        with self.assertRaises(ValueError):
-            self.client.get_all_water_temperatures()
+        with aioresponses() as session_mock:
+            session_mock.get(
+                'https://badetemperaturer.yr.no/api/watertemperatures',
+                payload="This is not a valid response"
+            )
+            with pytest.raises(ValueError):
+                client = WaterTemperatures("test_api_key", session)
+                await client.async_get_all_water_temperatures()
+
+        await session.close()
 
 
-    def test_malformed_data(self):
+    @pytest.mark.asyncio
+    async def test_malformed_data(self):
         """Test that the parser can handle missing keys or incorrect types."""
-        # This data is missing the 'temperature' key in the first item
-        malformed_data = [
-            {
-                "locationName": "Incomplete Beach",
-                "locationId": "0-99999",
-                "position": {"lat": 60.0, "lon": 10.0},
-                "elevation": 5,
-                "county": "Test County",
-                "municipality": "Test Municipality",
-                # "temperature": 10.0,  <-- Missing
-                "time": "2025-05-30T05:00:00+02:00",
-                "sourceDisplayName": "Test Source"
-            }
-        ]
-        with self.assertLogs('yrwatertemperatures', level='ERROR'):
-            # The parser should skip the bad item and return an empty list
-            parsed_data = self.client._parse_water_temperatures(malformed_data)
-            self.assertEqual(len(parsed_data), 0)
+        session = aiohttp.ClientSession()
 
+        with aioresponses() as session_mock:
+            session_mock.get(
+                'https://badetemperaturer.yr.no/api/watertemperatures',
+                payload=[
+                    {
+                        "locationName": "Test Location",
+                        "locationId": "0-12345",
+                        "position": {
+                            "lat": 59.88819,
+                            "lon": 10.59302
+                        },
+                        # Missing elevation, county, municipality, temperature, time
+                    }
+                ]
+            )
+
+            client = WaterTemperatures("test_api_key", session)
+            temperatures = await client.async_get_all_water_temperatures()
+
+        await session.close()
+
+        assert len(temperatures) == 0
