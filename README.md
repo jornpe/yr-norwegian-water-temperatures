@@ -68,3 +68,48 @@ The `get_temperatures` method returns a list of `LocationData` objects. Each obj
 `time` (datetime): The timestamp of the reading.
 
 `source` (str): The source of the data (not always present).
+
+## Development
+
+For development and contributing to this package:
+
+```bash
+# Clone the repository
+git clone https://github.com/jornpe/yr-norwegian-water-temperatures.git
+cd yr-norwegian-water-temperatures
+
+# Install in development mode
+pip install -e .[dev]
+
+# Install pre-commit hooks
+pre-commit install
+
+# Run tests
+pytest
+
+# Run tests with coverage
+pytest --cov=yrwatertemperatures --cov-report=html
+
+# Format code
+black .
+isort .
+
+# Type checking
+mypy yrwatertemperatures
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Changelog
+
+See [Releases](https://github.com/jornpe/yr-norwegian-water-temperatures/releases) for a detailed changelog.

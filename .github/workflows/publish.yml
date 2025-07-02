@@ -2,9 +2,9 @@ name: "Auto Release and Publish to PyPI"
 
 on:
   push:
-    branches: [ main, master, workflow-publish ]
+    branches: [ main, master, change-pypi-publishing ]
     paths:
-      - 'setup.py'
+      - 'pyproject.toml'
 
 jobs:
   versioning:
@@ -22,7 +22,8 @@ jobs:
     - name: "🏷️ Get version tag"
       id: set_var
       run: |
-        VERSION=$(python -c "import re; content=open('setup.py').read(); match=re.search(r\"version\s*=\s*['\\\"]([^'\\\"]+)['\\\"]\", content); print(match.group(1) if match else 'unknown')")
+        pip install tomli
+        VERSION=$(python -c "import tomli; data=tomli.load(open('pyproject.toml', 'rb')); print(data['project']['version'])")
         echo "COMPONENT_VERSION=$VERSION" >> $GITHUB_ENV
         echo "Version found: $VERSION"
 
@@ -91,9 +92,9 @@ jobs:
       uses: rickstaa/action-create-tag@v1
       id: "tag_create"
       with:
-        tag: "v${{ needs.auto-release.outputs.version }}"
+        tag: "v${{ needs.versioning.outputs.version }}"
         tag_exists_error: false
-        message: "Version ${{ needs.auto-release.outputs.version }}"
+        message: "Version ${{ needs.versioning.outputs.version }}"
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -131,33 +132,33 @@ jobs:
       with:
         prerelease: false
         body: |
-          Release of version ${{ needs.auto-release.outputs.version }}
+          Release of version ${{ needs.versioning.outputs.version }}
           
           ## Changes
           ${{ steps.changelog.outputs.changelog }}
           
           ## Installation
           ```bash
-          pip install yrwatertemperatures==${{ needs.auto-release.outputs.version }}
+          pip install yrwatertemperatures==${{ needs.versioning.outputs.version }}
           ```
-        name: "Version ${{ needs.auto-release.outputs.version }}"
-        tag_name: "v${{ needs.auto-release.outputs.version }}"
-      if: contains(needs.auto-release.outputs.version, 'beta') == false
+        name: "Version ${{ needs.versioning.outputs.version }}"
+        tag_name: "v${{ needs.versioning.outputs.version }}"
+      if: contains(needs.versioning.outputs.version, 'beta') == false
 
     - name: 🤞 Create Beta release
       uses: softprops/action-gh-release@v2
       with:
         prerelease: true
         body: |
-          Release of version ${{ needs.auto-release.outputs.version }}
+          Release of version ${{ needs.versioning.outputs.version }}
           
           ## Changes
           ${{ steps.changelog.outputs.changelog }}
           
           ## Installation
           ```bash
-          pip install yrwatertemperatures==${{ needs.auto-release.outputs.version }}
+          pip install yrwatertemperatures==${{ needs.versioning.outputs.version }}
           ```
-        name: "Version ${{ needs.auto-release.outputs.version }}"
-        tag_name: "v${{ needs.auto-release.outputs.version }}"
-      if: contains(needs.auto-release.outputs.version, 'beta') == true
+        name: "Version ${{ needs.versioning.outputs.version }}"
+        tag_name: "v${{ needs.versioning.outputs.version }}"
+      if: contains(needs.versioning.outputs.version, 'beta') == true
