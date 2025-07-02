@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='yrwatertemperatures',
-    version='0.9.1',
+    version='0.9.2',
     author='Jørn Pettersen',
     author_email='joern.pettersen@gmail.com',
     description='A Python client to fetch water temperatures in Norway from YR.no.',

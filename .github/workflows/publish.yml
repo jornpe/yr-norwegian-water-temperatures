@@ -22,7 +22,7 @@ jobs:
     - name: "🏷️ Get version tag"
       id: set_var
       run: |
-        VERSION=$(python -c "import re; content=open('setup.py').read(); match=re.search(r\"version\s*=\s*['\\\"]([^'\\\"]+)['\\\"], content); print(match.group(1) if match else 'unknown')")
+        VERSION=$(python -c "import re; content=open('setup.py').read(); match=re.search(r\"version\s*=\s*['\\\"]([^'\\\"]+)['\\\"]\", content); print(match.group(1) if match else 'unknown')")
         echo "COMPONENT_VERSION=$VERSION" >> $GITHUB_ENV
         echo "Version found: $VERSION"
 
