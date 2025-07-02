@@ -14,6 +14,14 @@ setup(
     install_requires=[
         'requests>=2.20.0',
     ],
+    extras_require={
+        'test': [
+            'pytest>=7.0.0',
+            'pytest-asyncio>=0.21.0',
+            'aioresponses>=0.7.4',
+            'aiohttp>=3.8.0',
+        ],
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

@@ -4,6 +4,7 @@ A Python package to fetch water temperature data from various locations in Norwa
 [![GitHub release](https://img.shields.io/github/release/jornpe/yr-norwegian-water-temperatures?include_prereleases=&sort=semver&color=blue)](https://github.com/jornpe/Yr-norwegian-water-temperatures-integration/releases/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](#license)
 [![issues - Yr-norwegian-water-temperatures-integration](https://img.shields.io/github/issues/jornpe/yr-norwegian-water-temperatures)](https://github.com/jornpe/Yr-norwegian-water-temperatures-integration/issues)
+[![Tests](https://github.com/jornpe/yr-norwegian-water-temperatures/actions/workflows/test.yml/badge.svg)](https://github.com/jornpe/yr-norwegian-water-temperatures/actions/workflows/test.yml)
 
 ## Installation
 ```
