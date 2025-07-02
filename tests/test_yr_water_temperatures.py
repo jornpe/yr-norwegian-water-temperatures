@@ -69,7 +69,7 @@ class TestWaterTemperatures(unittest.IsolatedAsyncioTestCase):
         assert temperatures[0].name == "Storøyodden"
         assert temperatures[0].temperature == 13.6
         assert temperatures[0].source == "Badevann.no"
-        assert temperatures[1].source == "Mainual"
+        assert temperatures[1].source == "Manual"
 
 
     @pytest.mark.asyncio
