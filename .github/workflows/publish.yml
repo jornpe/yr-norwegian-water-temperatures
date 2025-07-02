@@ -1,46 +1,49 @@
-name: Publish to PyPI
+name: "Auto Release and Publish to PyPI"
 
 on:
   push:
-    branches: [ main, master, workflow-publish ]
+    branches: [ main, master ]
     paths:
       - 'setup.py'
 
 jobs:
-  check-version:
+  auto-release:
+    name: "Auto Release"
     runs-on: ubuntu-latest
     outputs:
-      version-changed: ${{ steps.check.outputs.changed }}
-      version: ${{ steps.get-version.outputs.version }}
+      version: ${{ env.COMPONENT_VERSION }}
+      should-release: ${{ steps.check_tag.outputs.exists == 'false' }}
     steps:
-    - uses: actions/checkout@v4
+    - name: "✏️ Checkout code"
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 2
-    
-    - name: Check if version changed
-      id: check
-      run: |
-        if git diff HEAD~1 HEAD --name-only | grep -q "setup.py"; then
-          if git diff HEAD~1 HEAD setup.py | grep -q "version="; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
-        else
-          echo "changed=false" >> $GITHUB_OUTPUT
-        fi
-    
-    - name: Get version
-      id: get-version
-      if: steps.check.outputs.changed == 'true'
+        fetch-depth: 0
+
+    - name: "🏷️ Get version tag"
+      id: set_var
       run: |
         VERSION=$(python -c "import re; content=open('setup.py').read(); match=re.search(r\"version\s*=\s*['\\\"]([^'\\\"]+)['\\\"], content); print(match.group(1) if match else 'unknown')")
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Version: $VERSION"
+        echo "COMPONENT_VERSION=$VERSION" >> $GITHUB_ENV
+        echo "Version found: $VERSION"
+
+    - name: "🏷️ Check if tag exists already"
+      uses: mukunku/tag-exists-action@v1.6.0
+      id: "check_tag"
+      with: 
+        tag: "v${{ env.COMPONENT_VERSION }}"
+
+    - name: "❌ Cancel if tag is already present"
+      run: |
+        echo "Tag already present: v${{ env.COMPONENT_VERSION }}. Not creating a new release"
+        gh run cancel ${{ github.run_id }}
+        gh run watch ${{ github.run_id }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: steps.check_tag.outputs.exists == 'true'
 
   test:
-    needs: check-version
-    if: needs.check-version.outputs.version-changed == 'true'
+    needs: auto-release
+    if: needs.auto-release.outputs.should-release == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -65,12 +68,30 @@ jobs:
         pytest tests/ -v
 
   build-and-publish:
-    needs: [check-version, test]
-    if: needs.check-version.outputs.version-changed == 'true'
+    needs: [auto-release, test]
+    if: needs.auto-release.outputs.should-release == 'true'
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: "✏️ Checkout code"
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: "🗝️ Get previous release version"
+      id: last_release
+      uses: InsonusK/get-latest-release@v1.1.0
+      with:
+        myToken: ${{ github.token }}
+        exclude_types: "draft|prerelease"
+
+    - name: "🏷️ Create new tag"
+      uses: rickstaa/action-create-tag@v1
+      id: "tag_create"
+      with:
+        tag: "v${{ needs.auto-release.outputs.version }}"
+        tag_exists_error: false
+        message: "Version ${{ needs.auto-release.outputs.version }}"
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -92,23 +113,49 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
         twine upload dist/*
-    
-    - name: Create Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: "🗒️ Generate release changelog"
+      id: changelog
+      uses: heinrichreimer/github-changelog-generator-action@v2.4
       with:
-        tag_name: v${{ needs.check-version.outputs.version }}
-        release_name: Release v${{ needs.check-version.outputs.version }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        sinceTag: ${{ steps.last_release.outputs.tag_name }}
+        headerLabel: "# Notable changes since ${{ steps.last_release.outputs.tag_name }}"
+        stripGeneratorNotice: true
+      continue-on-error: true
+    
+    - name: 👍 Create Stable release
+      uses: softprops/action-gh-release@v2
+      with:
+        prerelease: false
         body: |
-          Release of version ${{ needs.check-version.outputs.version }}
+          Release of version ${{ needs.auto-release.outputs.version }}
           
           ## Changes
-          - Version updated to ${{ needs.check-version.outputs.version }}
+          ${{ steps.changelog.outputs.changelog }}
           
           ## Installation
           ```bash
-          pip install yrwatertemperatures==${{ needs.check-version.outputs.version }}
+          pip install yrwatertemperatures==${{ needs.auto-release.outputs.version }}
           ```
-        draft: false
-        prerelease: false
+        name: "Version ${{ needs.auto-release.outputs.version }}"
+        tag_name: "v${{ needs.auto-release.outputs.version }}"
+      if: contains(needs.auto-release.outputs.version, 'beta') == false
+
+    - name: 🤞 Create Beta release
+      uses: softprops/action-gh-release@v2
+      with:
+        prerelease: true
+        body: |
+          Release of version ${{ needs.auto-release.outputs.version }}
+          
+          ## Changes
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ## Installation
+          ```bash
+          pip install yrwatertemperatures==${{ needs.auto-release.outputs.version }}
+          ```
+        name: "Version ${{ needs.auto-release.outputs.version }}"
+        tag_name: "v${{ needs.auto-release.outputs.version }}"
+      if: contains(needs.auto-release.outputs.version, 'beta') == true
