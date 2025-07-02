@@ -80,7 +80,7 @@ class WaterTemperatures:
                     temperature=item["temperature"],
                     # Parse the ISO 8601 timestamp string into a datetime object
                     time=datetime.fromisoformat(item["time"]),
-                    source=item.get("sourceDisplayName", "")
+                    source=item.get("sourceDisplayName", "Manual")
                 )
                 temperatures.append(temp)
             except (KeyError, TypeError) as e:
