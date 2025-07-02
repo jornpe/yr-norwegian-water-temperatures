@@ -7,8 +7,8 @@ on:
       - 'setup.py'
 
 jobs:
-  auto-release:
-    name: "Auto Release"
+  versioning:
+    name: "Determine Version"
     runs-on: ubuntu-latest
     outputs:
       version: ${{ env.COMPONENT_VERSION }}
@@ -42,8 +42,9 @@ jobs:
       if: steps.check_tag.outputs.exists == 'true'
 
   test:
-    needs: auto-release
-    if: needs.auto-release.outputs.should-release == 'true'
+    name: "Run Tests"
+    needs: versioning
+    if: needs.versioning.outputs.should-release == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -68,8 +69,9 @@ jobs:
         pytest tests/ -v
 
   build-and-publish:
-    needs: [auto-release, test]
-    if: needs.auto-release.outputs.should-release == 'true'
+    name: "Build and Publish to PyPI"
+    needs: [versioning, test]
+    if: needs.versioning.outputs.should-release == 'true'
     runs-on: ubuntu-latest
     
     steps:
